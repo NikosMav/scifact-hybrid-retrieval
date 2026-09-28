@@ -56,8 +56,8 @@ all = [
 evidence-retrieval = "evidence_retrieval.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/NikosMav/news-evidence-retrieval"
-Repository = "https://github.com/NikosMav/news-evidence-retrieval"
+Homepage = "https://github.com/NikosMav/scifact-hybrid-retrieval"
+Repository = "https://github.com/NikosMav/scifact-hybrid-retrieval"
 
 [tool.setuptools.packages.find]
 include = ["evidence_retrieval*"]
