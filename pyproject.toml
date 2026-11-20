@@ -42,12 +42,12 @@ notebook = [
 ]
 dev = [
   "pytest>=7.4,<9",
-  "pytrec_eval>=0.5",
+  "pytrec-eval-terrier==0.5.11",
 ]
 # SciFact document qrels. Not installed in CI; the loader imports ir_datasets lazily.
 scifact = [
   "ir-datasets>=0.5.8,<1",
-  "pytrec_eval>=0.5",
+  "pytrec-eval-terrier==0.5.11",
 ]
 all = [
   "evidence-retrieval[notebook,dev]",
