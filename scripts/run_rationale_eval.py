@@ -4,12 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from evidence_retrieval.eval.rationales import EvidenceRetriever, score_claim
-
-
-def records(path):
-    with path.open(encoding="utf-8") as source:
-        return [json.loads(line) for line in source if line.strip()]
+from evidence_retrieval.eval.rationales import EvidenceRetriever, records, score_claim
 
 
 def fraction(n, d):

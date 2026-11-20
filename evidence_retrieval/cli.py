@@ -1,6 +1,6 @@
-"""CLI for the ISOT closed-corpus demo of the passage index.
+"""CLI for SciFact evidence retrieval and the ISOT closed-corpus demo.
 
-SciFact scoring is `scripts/run_scifact_eval.py`, not these subcommands.
+Use the evaluation scripts to reproduce the SciFact benchmark scores.
 
 Examples:
   python -m evidence_retrieval build --data-dir data --out data/retrieval_index/default
@@ -286,12 +286,27 @@ def _maybe_update_readme() -> None:
         print(f"(README metrics table not updated: {exc})")
 
 
+def cmd_evidence(args):
+    from evidence_retrieval.eval.rationales import EvidenceRetriever, records
+
+    if not args.text.strip() or args.top_k < 1:
+        raise SystemExit("Provide a nonempty claim and a positive --top-k.")
+    retriever = EvidenceRetriever(records(args.data_dir / "corpus.jsonl"))
+    selector = None
+    if args.selector == "learned":
+        selector = retriever.fit_selector(records(args.data_dir / "claims_train.jsonl"))
+    for rank, hit in enumerate(retriever.retrieve(args.text, args.top_k, selector), 1):
+        print(f"{rank}. {hit['title']} [SciFact {hit['doc_id']}]")
+        if hit["sentence_id"] is not None:
+            print(f"   Sentence {hit['sentence_id'] + 1}: {hit['sentence'].strip()}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="evidence_retrieval",
         description=(
-            "Rank passages for a claim. The score is SciFact\n"
-            "(BM25, MiniLM, hybrid RRF), not this command.\n\n"
+            "Find scientific evidence with the SciFact evidence command.\n\n"
             "build / query / eval are a closed-corpus demo on ISOT:\n"
             "the same package, not the evaluation. eval is title recovery.\n\n"
             "This is NOT a fact-checker. ISOT labels are source buckets\n"
@@ -312,6 +327,13 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     sub = parser.add_subparsers(dest="command", required=True)
+
+    evidence = sub.add_parser("evidence", help="Search SciFact and select a sentence per abstract")
+    evidence.add_argument("text", help="Scientific claim to search for")
+    evidence.add_argument("--data-dir", type=Path, required=True, help="SciFact release directory")
+    evidence.add_argument("--top-k", type=int, default=3, help="Number of abstracts to display")
+    evidence.add_argument("--selector", choices=["tfidf", "learned"], default="tfidf")
+    evidence.set_defaults(func=cmd_evidence)
 
     p_build = sub.add_parser(
         "build",

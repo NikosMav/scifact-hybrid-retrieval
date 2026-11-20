@@ -1,5 +1,12 @@
 # SciFact Hybrid Retrieval
 
+**Try the sentence search.** On the original SciFact dev split, the learned
+selector finds an annotated sentence for **109/188 claims**, compared with
+**99/188** for TF-IDF at the same reading budget. It gains 29 claims and loses
+19. For an air-pollution claim, one selector quotes the research question and
+the other quotes the finding. [See both sentences and run your own claim](docs/sentence-selection.md).
+[Related systems and next experiments](docs/related-work.md).
+
 ## Can search find the sentence that answers a scientific claim?
 
 BM25 put an evidence-bearing abstract in the top ten for **178 of 188 claims
