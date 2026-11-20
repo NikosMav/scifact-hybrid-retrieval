@@ -1,83 +1,52 @@
-# SciFact Hybrid Retrieval
+# SciFact Evidence Reader
 
-**Can a search engine show a reader just one evidence sentence?** On SciFact
-development claims, a selective reader showed one sentence on **40/300**
-claims. **28/40** matched the expert annotations. With a larger reading
-budget, three selected sentences per retrieved abstract recovered a complete
-rationale for **153/188** evidence-bearing claims. [Try the reader and inspect the tradeoffs](docs/reader.md).
+Given a scientific claim, this tool searches 5,183 research abstracts for a sentence that helps a reader assess it. If the best sentence falls below a cutoff learned on training data, the reader can abstain.
 
-On published rankings from **500,000 abstracts**, combining BM25 and MiniLM
-reached **157/206** claims at rank ten. BM25 reached **134/206**. MiniLM alone
-also reached **157/206**, with different successes. [SciFact-Open results and reproduction](docs/scifact-open.md).
+**[Open the browser demo](https://nikosmav.github.io/scifact-hybrid-retrieval/)** · Three recorded searches with the original abstracts and expert annotations. To search for your own claim, use the [local reader](#search-for-your-own-claim).
 
-## Can search find the sentence that answers a scientific claim?
+## Start with the air-pollution claim
 
-BM25 put an evidence-bearing abstract in the top ten for **178 of 188 claims
-(94.7%)** on the original SciFact development split. Given those hits, a
-TF-IDF selector found an annotated sentence for **99 of 178 (55.6%)**.
-Taking the first sentence of each retrieved abstract found one for **9 of 178
-(5.1%)**. The larger opportunity is inside the paper: **79 sentence misses**
-versus **10 abstract misses**.
+Is exposure to fine particulate air pollution associated with anxiety symptoms? A keyword search finds the right paper, but its top sentence describes what the researchers *wanted to find out*. The selective reader shows sentence 12, where they report the association they observed. Open **Check the expert annotation** to see which sentences the dataset accepts as evidence.
 
-For example, claim 5 puts abnormal prion protein prevalence at one in 2,000.
-BM25 ranked the right paper first. The selector chose the sentence describing
-the 32,441 samples. The annotated sentence gives the result: **493 per
-million**, approximately one in 2,000.
-[Inspect the hits, misses and original sentences](results/rationales/README.md).
+[![The keyword selector quotes the study objective. The selective reader quotes the conclusion reporting the association.](docs/reader-preview.png)](https://nikosmav.github.io/scifact-hybrid-retrieval/#case-399)
 
-The selector returns one sentence from each of ten retrieved abstracts. A
-claim earns credit if any selection matches an annotated sentence in its own
-abstract. That yields **99/188 (52.7%)** end to end. Requiring every sentence
-of at least one annotated rationale gives **94/188 (50.0%)**. The other 112
-development claims have no annotated rationale and are excluded. Support and
-contradiction labels come from the annotators. The system retrieves evidence.
+Two more examples show when the choice is harder. In the [open-access citations case](https://nikosmav.github.io/scifact-hybrid-retrieval/#case-129), the reader withholds a sentence about authors’ earlier citation records. In the [vision-screening case](https://nikosmav.github.io/scifact-hybrid-retrieval/#case-137), the experts require two sentences from the same abstract.
 
-### Reproduce the evidence benchmark
+## How well does it work?
 
-From an editable install with the repository's CI dependencies:
+| Question | Result on SciFact development claims |
+| --- | --- |
+| Can keyword search find the right paper? | BM25 put an evidence-bearing abstract in the top ten for **178 of 188** claims with annotated evidence (94.7%). |
+| Can the reader show just one sentence? | It showed a sentence for **40 of 300** claims. **28 of those 40** matched an expert annotation (70%). It abstained on the other 260. |
+| What does a larger reading budget buy? | Choosing one sentence from each of ten abstracts recovered a complete expert rationale for **112 of 188** claims. Choosing three per abstract raised that to **153 of 188** (81.4%), at a cost of up to 30 sentences to read. |
+
+A *rationale* is the sentence or set of sentences experts marked as evidence. Of the 300 claims, 188 have at least one annotated rationale. The reader retrieves text for inspection. Expert labels in the demo describe the dataset’s judgment. [Methods, reading costs and per-claim results](docs/reader.md).
+
+## Search for your own claim
+
+From the checkout, using Python 3.12:
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
 python scripts/download_scifact.py /tmp/scifact-data
-python scripts/run_rationale_eval.py --data /tmp/scifact-data --split dev --out /tmp/scifact-dev
+python -m evidence_retrieval read --data-dir /tmp/scifact-data --model results/reader/reader.json \
+  "Exposure to fine particulate air pollution is relate to anxiety prevalence."
 ```
 
-The downloader verifies the release SHA-256. BM25 indexes titles and abstracts
-with the settings below. The sentence selector fits sublinear word TF-IDF on
-the corpus sentences, ranks by cosine similarity within each candidate
-abstract and breaks ties by original sentence order. Neither stage uses the
-evidence labels to rank. The report pairs examples with their published
-rationales. [Per-claim predictions](results/rationales/claims.jsonl) include
-all ten candidates, zero-based sentence positions and gold rationale groups.
-[Dataset and annotation format](https://github.com/allenai/scifact/blob/master/doc/data.md).
+The example uses the dataset’s original wording. Replace the quoted text with your own claim. The default shows one sentence if it clears the cutoff. Add `--mode first` to inspect the highest-scoring candidate even when the reader would abstain.
 
-## Document-ranking benchmark
+## Explore the benchmarks
 
-On SciFact test (BEIR), BM25 reaches nDCG@10 **0.6762**, next to published
-Anserini flat BM25 **0.6789** and BEIR BM25 **0.665**. Hybrid RRF reaches
-**0.7194** and beats BM25 on a paired sign test (p=4.3×10⁻⁸; 74 up / 21 down /
-205 ties). MiniLM alone does not beat BM25 (0.6451, p=0.73). Cross-encoder
-reranking of hybrid's top 50 hurts (0.7194 → 0.6903) and is not significant
-versus BM25 (p=0.10).
+- **Finding papers.** On the 300-query BEIR SciFact test split, combining keyword and semantic search improved the top-ten ranking score (nDCG@10) from **0.6762** for BM25 to **0.7194**. [Scores and ranked runs](results/README.md).
+- **Searching a larger collection.** On published rankings over 500,000 SciFact-Open abstracts, hybrid retrieval found a judged paper in the top ten for **157/206** claims. BM25 reached **134/206**. Semantic search alone also reached **157/206**, with different successes. [Full-corpus results and local timing measurements](docs/scifact-open.md).
+- **Choosing sentences.** Compare a keyword-based selector with a trained selector at the same reading budget. [Paired results and failure cases](docs/sentence-selection.md).
 
-This is **not a fact-checker**. A retrieved abstract does not establish whether
-the claim is true.
+<details>
+<summary>Document-ranking tables, failure analysis and reproduction commands</summary>
 
-## SciFact test
-
-`beir/scifact/test` via `ir_datasets`: 300 claims, 5,183 abstracts, one document
-per abstract. Metrics are pytrec_eval nDCG@10, Recall@100, and reciprocal rank.
-BM25 is `bm25s` with Lucene scoring, k1=0.9, b=0.4, English stopwords, and a
-Snowball stemmer. Dense retrieval is `sentence-transformers/all-MiniLM-L6-v2`.
-Hybrid is RRF (k=60) of those two rank lists. The word-window chunker is not used.
-
-The train split (809 queries) was run first. The test split was scored only
-after that metric code was frozen. Regenerate with:
-
-```bash
-pip install -e ".[scifact]"
-python scripts/run_scifact_eval.py --split train
-python scripts/run_scifact_eval.py --split test
-```
+The following tables measure document rankings on BEIR SciFact test. BM25 uses keyword matching, MiniLM provides semantic similarity, and hybrid combines the two ranked lists using reciprocal rank fusion.
 
 <!-- SCIFACT_TEST_TABLE_START -->
 | Method | nDCG@10 | Recall@100 | Reciprocal rank |
@@ -87,18 +56,7 @@ python scripts/run_scifact_eval.py --split test
 | hybrid | 0.7194 | 0.9550 | 0.6869 |
 <!-- SCIFACT_TEST_TABLE_END -->
 
-BM25 nDCG@10 is 0.6762. The published anchors are BEIR BM25 **0.665** and
-Anserini flat BM25 **0.6789**. Recall@100 for this BM25 run is 0.9127; BEIR
-reports 0.908 for BM25.
-
-MiniLM does not beat BM25 on nDCG@10 (0.6451 vs 0.6762; paired sign test
-p=0.73). Hybrid does (0.7194; 74 queries up, 21 down, 205 ties, p=4.3×10⁻⁸).
-
-### Ablations on the same test qrels
-
-The reranker uses hybrid as its first stage because that system had the higher
-train nDCG@10 (0.719 vs BM25 0.694 vs MiniLM 0.660). The test split was not
-used to choose it.
+The next table compares a cross-encoder reranker and a second semantic encoder (BGE).
 
 <!-- SCIFACT_ABLATION_TABLE_START -->
 | Method | nDCG@10 | Recall@100 | Reciprocal rank |
@@ -108,86 +66,22 @@ used to choose it.
 | bge_hybrid | 0.7189 | 0.9650 | 0.6865 |
 <!-- SCIFACT_ABLATION_TABLE_END -->
 
-Replacing MiniLM with `BAAI/bge-small-en-v1.5` moves dense nDCG@10 from 0.6451
-to 0.7127 (sign test against BM25, p=0.018). Queries use BGE's retrieval
-instruction; abstracts do not. Putting that encoder into RRF does not move
-hybrid nDCG@10 (0.7189 vs 0.7194). BGE hybrid Recall@100 does move, to 0.9650.
-
-Reranking the top 50 hybrid hits with `cross-encoder/ms-marco-MiniLM-L-6-v2`
-does not help. nDCG@10 goes from 0.7194 to 0.6903, and the comparison with BM25
-is not significant (p=0.10). Recall@100 stays 0.9550 because the reranker only
-reorders those 50 hits.
-
-`sentence-transformers` stays `>=2.6,<4`. Both ablations use the existing
-`SentenceTransformer.encode` and `CrossEncoder` APIs. Regenerate the ablation
-rows with `python scripts/run_scifact_ablations.py --split test`.
-
-Three misses from the frozen three-way run are in
-[`results/scifact_failures.md`](results/scifact_failures.md): a methionine-restriction
-claim whose BM25 hit is a lifespan abstract while MiniLM returns a miRNA review;
-a vCJD prevalence claim that BM25 ranks first and MiniLM replaces with a different
-case report; and a low-birth-weight claim that none of the three systems place
-in the top 10.
-
-On the same per-query file, 10 queries drop by at least 0.5 nDCG@10 versus BM25.
-Query 785 goes from 1.0 to 0.0 while Recall@100 stays 1 (reciprocal rank 1/18).
-The low-birth-weight claim is outside the top 10 and inside the top 100 for
-MiniLM and hybrid. Hybrid loses Recall@100 to BM25 on 0 queries and is worse
-than both parents on 0 test queries.
-
-CI does not download BEIR or these models.
-
-## Quick start
-
-The test suite uses synthetic data and mocked dense encoders. It does not
-download ISOT, BEIR, or MiniLM:
+BGE hybrid Recall@100 does move, to 0.9650. On the main comparison, 10 queries drop by at least 0.5 nDCG@10 versus BM25. Query 785 goes from 1.0 to 0.0 while Recall@100 stays 1 (reciprocal rank 1/18). The low-birth-weight claim is outside the top 10 and inside the top 100 for MiniLM and hybrid. Hybrid loses Recall@100 to BM25 on 0 queries and is worse than both parents on 0 test queries. The case notes also cover the methionine and vCJD queries. [Three ranking failures](results/scifact_failures.md).
 
 ```bash
-git clone https://github.com/NikosMav/scifact-hybrid-retrieval.git
-cd scifact-hybrid-retrieval
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
-pytest
-python -m evidence_retrieval -h
+python -m pip install -e ".[scifact]"
+python scripts/run_scifact_eval.py --split train
+python scripts/run_scifact_eval.py --split test
+python scripts/run_scifact_ablations.py --split test
 ```
 
-On Python 3.13, building `pytrec_eval` needs a C++ compiler and Python headers
-(Debian/Ubuntu: `sudo apt install g++ python3-dev`).
+</details>
 
-## ISOT closed-corpus demo
+<details>
+<summary>Development, related work and the ISOT news demo</summary>
 
-The same package can index ISOT news CSVs for a local query demo. That demo is
-not the score. Setup, caveats, and regenerate commands are in
-[`docs/isot-demo.md`](docs/isot-demo.md). Title-recovery and paraphrase outputs
-stay in [`results/`](results/README.md).
+Install the development dependencies with `python -m pip install -e ".[dev]"` and run `pytest`. The tests use synthetic fixtures and mocked dense encoders. The separate ISOT demo searches news articles. [ISOT setup](docs/isot-demo.md) · [Related research](docs/related-work.md).
 
-## Repository map
+</details>
 
-| Path | Purpose |
-| --- | --- |
-| `evidence_retrieval/` | Chunking, BM25, MiniLM, hybrid RRF, and the CLI |
-| `tests/` | Unit tests (no BEIR, no torch) |
-| `results/` | SciFact scores, failures, and ablations; ISOT demo files |
-| `docs/isot-demo.md` | ISOT closed-corpus side demo |
-| `scripts/run_scifact_eval.py` | BM25 vs MiniLM vs RRF on SciFact |
-| `scripts/run_scifact_ablations.py` | Cross-encoder rerank and BGE-small on the frozen test split |
-| `evidence_retrieval.ipynb` | Short ISOT query demo of the same package |
-
-## Limitations
-
-- The committed SciFact test table is the comparison. Regenerating it needs `pip install -e ".[scifact]"` and the commands above. Tokenizer and BM25 parameters are named in `results/scifact_eval_meta.json`; they are not a guaranteed match to Elasticsearch's 0.665.
-- The dense index is an in-memory brute-force cosine index. A few thousand vectors do not need an ANN service.
-- The ISOT demo is a closed historical corpus. Its judgments are same-article title recovery, not independent qrels, and source-bucket labels can encode outlet and style.
-- No web evidence is fetched.
-
-## Data and license
-
-`scripts/download_data.py` downloads the
-[ISOT Fake News Dataset](https://onlineacademiccommunity.uvic.ca/isot/2022/11/27/fake-news-detection-datasets/)
-for the closed-corpus demo. SciFact is loaded on demand via `ir_datasets`
-(`beir/scifact`, CC BY-NC 2.0). The large CSVs, BEIR cache, and generated
-indexes are not part of Git.
-
-Code is released under the [MIT License](LICENSE.md). Dataset use remains subject
-to the source dataset's terms.
+Code is available under the MIT license. The research data and paper excerpts remain subject to their source terms. [License](LICENSE.md) · [SciFact dataset and paper](https://github.com/allenai/scifact).
