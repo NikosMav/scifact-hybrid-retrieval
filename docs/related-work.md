@@ -16,7 +16,9 @@
 | Pyserini | Prebuilt indexes, queries, judgments and commands to reproduce reference retrieval runs. [Reproduction guides](https://github.com/castorini/pyserini/blob/master/docs/reproducibility.md) | Ship per-claim predictions alongside aggregate results and a command that regenerates them. The paired selector comparison does both. |
 | SciFact-Open | Expanded to 500,000 abstracts with additional judgments collected by pooling. For pooled documents the supplied sentence highlights are model predictions. [Data documentation](https://github.com/dwadden/scifact-open/blob/master/doc/data.md) | Use pooled judgments to test abstract retrieval at scale. Use expert-annotated citation evidence for the sentence benchmark. |
 
-## Experiments in priority order
+## Experiments and results
+
+[First-sentence and multi-sentence results](reader.md) · [SciFact-Open retrieval results](scifact-open.md)
 
 1. **Rank sentences across the ten candidates and permit abstention.** The current success metric allows ten displayed sentences and excludes 112 claims without annotated evidence. Choose a cutoff on training folds grouped by evidence paper. Evaluate precision of the first displayed sentence, coverage, and how often the system returns a sentence for a dev claim without an annotated rationale. Treat those last cases as unjudged outside the annotations.
 2. **Recover multi-sentence rationales.** Compare adjacent sentence windows against a context-aware reader with one and three sentences per candidate. Keep BM25 fixed. Report the extra sentences read per additional complete rationale, including losses on single-sentence claims. The current learned selector recovers a complete rationale for 103/188 claims at the one-sentence budget.

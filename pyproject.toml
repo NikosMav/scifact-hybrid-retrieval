@@ -32,6 +32,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+open-benchmark = ["onnxruntime>=1.18,<2", "tokenizers>=0.20,<1"]
 # Walkthrough notebook (evidence_retrieval.ipynb).
 notebook = [
   "jupyter>=1.0,<2",

@@ -1,0 +1,46 @@
+{
+  "rankings_sha256": "216695bad8474604f52a83dc425decca61524901a2028012a0d31f3b5634f6a9",
+  "claims_sha256": "ecd7a1bec2fc1b483f9127f6d0927ff17ebeb08e120088c6e037dfc85ce2b63b",
+  "bm25": {
+    "all": {
+      "hits": 134,
+      "judged_claims": 206
+    },
+    "citation": {
+      "hits": 108,
+      "judged_claims": 190
+    },
+    "pooling": {
+      "hits": 43,
+      "judged_claims": 81
+    }
+  },
+  "dense": {
+    "all": {
+      "hits": 157,
+      "judged_claims": 206
+    },
+    "citation": {
+      "hits": 132,
+      "judged_claims": 190
+    },
+    "pooling": {
+      "hits": 52,
+      "judged_claims": 81
+    }
+  },
+  "hybrid": {
+    "all": {
+      "hits": 157,
+      "judged_claims": 206
+    },
+    "citation": {
+      "hits": 135,
+      "judged_claims": 190
+    },
+    "pooling": {
+      "hits": 51,
+      "judged_claims": 81
+    }
+  }
+}

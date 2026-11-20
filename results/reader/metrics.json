@@ -1,0 +1,36 @@
+{
+  "one": {
+    "read": 1880,
+    "annotated_sentences": 122,
+    "complete": 112,
+    "misses_on_claims_with_singleton": 66
+  },
+  "three": {
+    "read": 5640,
+    "annotated_sentences": 227,
+    "complete": 153,
+    "misses_on_claims_with_singleton": 29
+  },
+  "window": {
+    "read": 5640,
+    "annotated_sentences": 197,
+    "complete": 142,
+    "misses_on_claims_with_singleton": 40
+  },
+  "always": {
+    "shown": 300,
+    "correct": 97,
+    "shown_without_annotation": 112
+  },
+  "selective": {
+    "shown": 40,
+    "correct": 28,
+    "shown_without_annotation": 5
+  },
+  "fit": 599,
+  "calibration": 210,
+  "calibration_shown": 24,
+  "calibration_correct": 17,
+  "dev": 300,
+  "judged": 188
+}

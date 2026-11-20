@@ -302,6 +302,32 @@ def cmd_evidence(args):
     return 0
 
 
+def cmd_read(args):
+    from evidence_retrieval.eval.rationales import EvidenceRetriever, records
+    from evidence_retrieval.reader import Reader, candidates, first_sentence, select_budget
+
+    if not args.text.strip():
+        raise SystemExit("Provide a nonempty claim.")
+    reader = Reader.load(args.model)
+    retriever = EvidenceRetriever(records(args.data_dir / "corpus.jsonl"))
+    scored = reader.score(candidates(retriever, args.text))
+    if args.mode in ("selective", "first"):
+        best = first_sentence(scored)
+        if best is None or (args.mode == "selective" and not reader.accepts(best[2])):
+            print("Abstained. No sentence cleared the calibrated cutoff.")
+            return 0
+        doc, position, _ = best
+        selections = [(doc, [position])]
+    else:
+        selections = [(doc, select_budget(scores, args.budget, args.mode == "window"))
+                      for doc, scores in scored]
+    for doc, indices in selections:
+        print(f"{doc['title']} [SciFact {doc['doc_id']}]")
+        for i in indices:
+            print(f"  Sentence {i + 1}: {doc['abstract'][i].strip()}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="evidence_retrieval",
@@ -334,6 +360,15 @@ def build_parser() -> argparse.ArgumentParser:
     evidence.add_argument("--top-k", type=int, default=3, help="Number of abstracts to display")
     evidence.add_argument("--selector", choices=["tfidf", "learned"], default="tfidf")
     evidence.set_defaults(func=cmd_evidence)
+
+    read = sub.add_parser("read", help="Show one calibrated SciFact sentence or inspect evidence sets")
+    read.add_argument("text")
+    read.add_argument("--data-dir", type=Path, required=True)
+    read.add_argument("--model", type=Path, required=True, help="Frozen reader.json from evaluate_reader")
+    read.add_argument("--mode", choices=["selective", "first", "ranked", "window"], default="selective")
+    read.add_argument("--budget", type=int, choices=[1, 3], default=3,
+                      help="Sentences per abstract in ranked or window mode")
+    read.set_defaults(func=cmd_read)
 
     p_build = sub.add_parser(
         "build",

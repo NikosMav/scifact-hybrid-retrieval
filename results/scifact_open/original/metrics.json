@@ -1,0 +1,49 @@
+{
+  "collection": "original",
+  "documents": 5183,
+  "queries": 279,
+  "corpus_sha256": "b8d6c89624cb2ed74dee8938effc4f5d8bd2086887880af8110d64be4ceade62",
+  "claims_sha256": "ecd7a1bec2fc1b483f9127f6d0927ff17ebeb08e120088c6e037dfc85ce2b63b",
+  "architecture": "x86_64",
+  "python": "3.12.14",
+  "onnx_threads": 4,
+  "blas_threads_env": "1",
+  "bm25": {
+    "hit_at_10": {
+      "all": {
+        "hits": 182,
+        "judged_claims": 206
+      },
+      "citation": {
+        "hits": 175,
+        "judged_claims": 190
+      },
+      "pooling": {
+        "hits": 22,
+        "judged_claims": 81
+      }
+    },
+    "median_query_ms": 0.1794190000055096,
+    "build_seconds": 0.6374657919999436,
+    "index_bytes": 4705772
+  },
+  "hybrid": {
+    "hit_at_10": {
+      "all": {
+        "hits": 185,
+        "judged_claims": 206
+      },
+      "citation": {
+        "hits": 179,
+        "judged_claims": 190
+      },
+      "pooling": {
+        "hits": 19,
+        "judged_claims": 81
+      }
+    },
+    "median_query_ms": 4.393956999820148,
+    "build_seconds": 138.12519459199973,
+    "index_bytes": 12666988
+  }
+}

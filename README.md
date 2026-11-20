@@ -1,11 +1,14 @@
 # SciFact Hybrid Retrieval
 
-**Try the sentence search.** On the original SciFact dev split, the learned
-selector finds an annotated sentence for **109/188 claims**, compared with
-**99/188** for TF-IDF at the same reading budget. It gains 29 claims and loses
-19. For an air-pollution claim, one selector quotes the research question and
-the other quotes the finding. [See both sentences and run your own claim](docs/sentence-selection.md).
-[Related systems and next experiments](docs/related-work.md).
+**Can a search engine show a reader just one evidence sentence?** On SciFact
+development claims, a selective reader showed one sentence on **40/300**
+claims. **28/40** matched the expert annotations. With a larger reading
+budget, three selected sentences per retrieved abstract recovered a complete
+rationale for **153/188** evidence-bearing claims. [Try the reader and inspect the tradeoffs](docs/reader.md).
+
+On published rankings from **500,000 abstracts**, combining BM25 and MiniLM
+reached **157/206** claims at rank ten. BM25 reached **134/206**. MiniLM alone
+also reached **157/206**, with different successes. [SciFact-Open results and reproduction](docs/scifact-open.md).
 
 ## Can search find the sentence that answers a scientific claim?
 
